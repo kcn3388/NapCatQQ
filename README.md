@@ -14,6 +14,9 @@ NapCatQQ（瞌睡猫QQ，不准叫我NCQQ！），像睡着了一样在后台低
 
 目前只支持 onebot11 协议
 
+## CQCode
+请尽快迁移出CQCode消息格式
+
 ## 下载
 
 前往 Release 页面下载最新版本
