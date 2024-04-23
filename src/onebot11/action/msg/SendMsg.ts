@@ -21,7 +21,6 @@ import { SendMsgElementConstructor } from '@/core/qqnt/entities/constructor';
 import BaseAction from '../BaseAction';
 import { ActionName, BaseCheckResult } from '../types';
 import * as fs from 'node:fs';
-import { decodeCQCode } from '../../cqcode';
 import { dbUtil } from '@/common/utils/db';
 import { log } from '@/common/utils/log';
 import { sleep } from '@/common/utils/helper';
@@ -81,7 +80,7 @@ export function convertMessage2List(message: OB11MessageMixType, autoEscape = fa
         }
       }];
     } else {
-      message = decodeCQCode(message.toString());
+      message = message.toString();
     }
   } else if (!Array.isArray(message)) {
     message = [message];

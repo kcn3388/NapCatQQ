@@ -24,7 +24,6 @@ import {
   User
 } from '@/core/qqnt/entities';
 import { EventType } from './event/OB11BaseEvent';
-import { encodeCQCode } from './cqcode';
 import { dbUtil } from '@/common/utils/db';
 import { OB11GroupIncreaseEvent } from './event/notice/OB11GroupIncreaseEvent';
 import { OB11GroupBanEvent } from './event/notice/OB11GroupBanEvent';
@@ -44,7 +43,6 @@ import { NTQQGroupApi, NTQQUserApi } from '@/core/qqnt/apis';
 
 export class OB11Constructor {
   static async message(msg: RawMessage): Promise<OB11Message> {
-    const { messagePostFormat } = ob11Config;
     const message_type = msg.chatType == ChatType.group ? 'group' : 'private';
     const resMsg: OB11Message = {
       self_id: parseInt(selfInfo.uin),
@@ -61,8 +59,8 @@ export class OB11Constructor {
       raw_message: '',
       font: 14,
       sub_type: 'friend',
-      message: messagePostFormat === 'string' ? '' : [],
-      message_format: messagePostFormat === 'string' ? 'string' : 'array',
+      message: [],
+      message_format: 'array',
       post_type: selfInfo.uin == msg.senderUin ? EventType.MESSAGE_SENT : EventType.MESSAGE,
     };
     if (msg.chatType == ChatType.group) {
@@ -257,11 +255,8 @@ export class OB11Constructor {
         message_data['data']['id'] = msg.msgId;
       }
       if (message_data.type !== 'unknown' && message_data.data) {
-        const cqCode = encodeCQCode(message_data);
-        if (messagePostFormat === 'string') {
-          (resMsg.message as string) += cqCode;
-        } else (resMsg.message as OB11MessageData[]).push(message_data);
-        resMsg.raw_message += cqCode;
+        (resMsg.message as OB11MessageData[]).push(message_data);
+        resMsg.raw_message += message_data;
       }
     }
     resMsg.raw_message = resMsg.raw_message.trim();

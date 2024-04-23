@@ -13,7 +13,6 @@ export interface OB11Config {
   enableHttpPost: boolean;
   enableWs: boolean;
   enableWsReverse: boolean;
-  messagePostFormat: 'array' | 'string';
   reportSelfMessage: boolean;
   enableLocalFile2Url: boolean;
   debug: boolean;
@@ -39,7 +38,6 @@ class Config implements OB11Config {
   enableHttpHeart = false;
   enableWs = false;
   enableWsReverse = false;
-  messagePostFormat: 'array' | 'string' = 'array';
   reportSelfMessage = false;
   debug = false;
   enableLocalFile2Url = true;

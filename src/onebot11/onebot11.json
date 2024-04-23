@@ -9,7 +9,6 @@
   "httpPostUrls": [],
   "enableHttpHeart": false,
   "httpSecret": "",
-  "messagePostFormat": "array",
   "reportSelfMessage": false,
   "debug": false,
   "enableLocalFile2Url": true,

@@ -51,7 +51,6 @@ json 配置内容参数解释：
   // http上报密钥，可为空
   "httpSecret": "",
   // 消息上报格式，array为消息组，string为cq码字符串
-  "messagePostFormat": "array",
   // 是否上报自己发送的消息
   "reportSelfMessage": false,
   // 是否开启调试模式，开启后上报消息会携带一个raw字段，为原始消息内容
