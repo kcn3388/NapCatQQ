@@ -14,8 +14,10 @@ NapCatQQ（瞌睡猫QQ，不准叫我NCQQ！），像睡着了一样在后台低
 
 目前只支持 onebot11 协议
 
-## CQCode
-请尽快迁移出CQCode消息格式
+## 提示
+**请尽快移除CQCode支持**
+
+新功能不受CQCode支持，使用String储存不同字段数据存在 **安全风险**
 
 ## 下载
 
@@ -23,7 +25,7 @@ NapCatQQ（瞌睡猫QQ，不准叫我NCQQ！），像睡着了一样在后台低
 
 ## 启动
 
-NapCat 是基于 官方NTQQ 实现的Bot框架，因此先需要安装官方QQ，**注意同个账号不能同时登录原版 QQ 和 NapCatQQ**
+NapCat 是基于 官方NTQQ 实现的Bot框架，因此先需要安装官方QQ，**注意同个账号不能同时登录NT QQ 和 NapCatQQ**
 
 *如果没有安装 QQ 请往后翻查看安装方法*
 

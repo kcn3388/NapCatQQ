@@ -29,6 +29,7 @@ import { OB11GroupIncreaseEvent } from './event/notice/OB11GroupIncreaseEvent';
 import { OB11GroupBanEvent } from './event/notice/OB11GroupBanEvent';
 import { OB11GroupUploadNoticeEvent } from './event/notice/OB11GroupUploadNoticeEvent';
 import { OB11GroupNoticeEvent } from './event/notice/OB11GroupNoticeEvent';
+import { OB11FriendAddNoticeEvent } from './event/notice/OB11FriendAddNoticeEvent';
 
 import { calcQQLevel } from '../common/utils/qqlevel';
 import { log } from '../common/utils/log';
@@ -39,7 +40,6 @@ import { OB11GroupDecreaseEvent } from './event/notice/OB11GroupDecreaseEvent';
 import { ob11Config } from '@/onebot11/config';
 import { deleteGroup, getFriend, getGroupMember, groupMembers, selfInfo, tempGroupCodeMap } from '@/common/data';
 import { NTQQFileApi, NTQQGroupApi, NTQQUserApi } from '@/core/qqnt/apis';
-import { rkeyHook } from '@/core/qqnt/extends/rkey';
 import http from 'http';
 
 
@@ -138,88 +138,8 @@ export class OB11Constructor {
         // message_data["data"]["file"] = element.picElement.sourcePath
         message_data['data']['file'] = element.picElement.fileName;
         // message_data["data"]["path"] = element.picElement.sourcePath
-        const url = element.picElement.originImageUrl;
-        const md5HexStr = element.picElement.md5HexStr;
-        const fileMd5 = element.picElement.md5HexStr;
-        const fileUuid = element.picElement.fileUuid;
-        // let currentRKey = config.imageRKey || "CAQSKAB6JWENi5LMk0kc62l8Pm3Jn1dsLZHyRLAnNmHGoZ3y_gDZPqZt-64"
-        if (url) {
-          if (url.startsWith('/download')) {
-            let rkey = rkeyHook.GetRkey();
-            console.log('rkey', rkey);
-            if (url.includes('&rkey=')) {
-              // 正则提取rkey
-              // const rkey = url.match(/&rkey=([^&]+)/)[1]
-              // // log("图片url已有rkey", rkey)
-              // if (rkey != currentRKey){
-              //     config.imageRKey = rkey
-              //     if (Date.now() - lastRKeyUpdateTime > 1000 * 60) {
-              //         lastRKeyUpdateTime = Date.now()
-              //         getConfigUtil().setConfig(config)
-              //     }
-              // }
-              message_data['data']['url'] = IMAGE_HTTP_HOST_NT + url;
-            } else {
-              const getRkey = async () => {
-                await NTQQFileApi.downloadMedia(msg.msgId, msg.chatType, msg.peerUid, element.elementId, '', '');
-                rkey = rkeyHook.GetRkey();
-              };
-              if (!rkey) {
-                // 下载一次图片获取rkey
-                try {
-                  await getRkey();
-                } catch (e) {
-                  continue;
-                }
-              }
-              let imageUrl = IMAGE_HTTP_HOST_NT + url + `${rkey}`;
-              // 调用head请求获取图片rkey是否正常
-              const checkUrl = new Promise((resolve, reject) => {
-                const options = {
-                  method: 'HEAD',
-                  host: new URL(imageUrl).host,
-                  path: new URL(imageUrl).pathname
-                };
-                const req = http.request(options, (res) => {
-                  console.log(`STATUS: ${res.statusCode}`);
-                  console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
-
-                  if (res.statusCode == 200) {
-                    console.log('The Image URL is accessible.');
-                    resolve('ok');
-                  } else {
-                    reject('The Image URL is not accessible.');
-                  }
-                });
-
-                req.on('error', (e) => {
-                  console.error(`problem with request: ${e.message}`);
-                  reject(e.message);
-                });
-                req.end();
-              });
-              try {
-                await checkUrl;
-              } catch (e) {
-                try {
-                  await getRkey();
-                  imageUrl = IMAGE_HTTP_HOST_NT + url + `${rkey}`;
-                } catch (e) {
-                  log('获取rkey失败', e);
-                }
-              }
-              message_data['data']['url'] = imageUrl;
-            }
-          } else {
-            message_data['data']['url'] = IMAGE_HTTP_HOST + url;
-          }
-        } else if (fileMd5) {
-          message_data['data']['url'] = `${IMAGE_HTTP_HOST}/gchatpic_new/0/0-0-${fileMd5.toUpperCase()}/0`;
-        }
-
-        if (!message_data['data']['url']) {
-          message_data['data']['url'] = `${IMAGE_HTTP_HOST}/gchatpic_new/0/0-0-${md5HexStr!.toUpperCase()}/0`;
-        }
+        // let currentRKey = "CAQSKAB6JWENi5LMk0kc62l8Pm3Jn1dsLZHyRLAnNmHGoZ3y_gDZPqZt-64"
+        message_data['data']['url'] = await NTQQFileApi.getImageUrl(msg);
         // message_data["data"]["file_id"] = element.picElement.fileUuid
         message_data['data']['file_size'] = element.picElement.fileSize;
         dbUtil.addFileCache({
@@ -291,6 +211,13 @@ export class OB11Constructor {
       } else if (element.marketFaceElement) {
         message_data['type'] = OB11MessageDataType.mface;
         message_data['data']['text'] = element.marketFaceElement.faceName;
+        const md5 = element.marketFaceElement.emojiId;
+        // 取md5的前两位
+        const dir = md5.substring(0, 2);
+        // 获取组装url
+        // const url = `https://p.qpic.cn/CDN_STATIC/0/data/imgcache/htdocs/club/item/parcel/item/${dir}/${md5}/300x300.gif?max_age=31536000`;
+        const url = `https://gxh.vip.qq.com/club/item/parcel/item/${dir}/${md5}/raw300.gif`;
+        message_data['data']['url'] = url;
       } else if (element.markdownElement) {
         message_data['type'] = OB11MessageDataType.markdown;
         message_data['data']['data'] = element.markdownElement.content;
@@ -439,6 +366,17 @@ export class OB11Constructor {
         }
       }
     }
+  }
+
+  static async FriendAddEvent(msg: RawMessage): Promise<OB11FriendAddNoticeEvent | undefined> {
+    if (msg.chatType !== ChatType.friend) {
+      return;
+    }
+    if (msg.msgType === 5 && msg.subMsgType === 12) {
+      const event = new OB11FriendAddNoticeEvent(parseInt(msg.peerUin));
+      return event;
+    }
+    return;
   }
 
   static friend(friend: User): OB11User {
